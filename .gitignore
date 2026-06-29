@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+.env
+
+# VS Code
+.vscode/
+
+# Excel temp files
+~$*.xlsx
+
+# Generated outputs
+Outputs/*.csv
+Outputs/*.xlsx
+
+# Debug files
+lieferando_debug.txt
+
+# Backup folders
+Backup_23_06_2026/
+Backup_23_06_2026_v2/
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Input data (contains business documents)
+Data/
+
+# Keep the folder structure
+!Data/.gitkeep

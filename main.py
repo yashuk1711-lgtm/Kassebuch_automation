@@ -1,0 +1,1 @@
+print("Kassenbuch Automation Started")
