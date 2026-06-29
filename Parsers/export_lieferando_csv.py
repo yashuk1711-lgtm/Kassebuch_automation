@@ -1,33 +1,26 @@
-import pdfplumber
-
-
-def extract_text(pdf_path):
-    text = ""
-
-    with pdfplumber.open(pdf_path) as pdf:
-        for page in pdf.pages:
-            page_text = page.extract_text()
-
-            if page_text:
-                text += page_text + "\n"
-
-    return text
-
+import pandas as pd
+from bank_parser import extract_text, extract_lieferando_transactions
 
 pdf_file = "Data/Bank/January_Bank_Statement.pdf"
 
 text = extract_text(pdf_file)
 
-lines = text.split("\n")
+transactions = extract_lieferando_transactions(text)
 
-for i, line in enumerate(lines):
+rows = []
 
-    if "TAKEAWAYCOM" in line:
+for date, amount in transactions:
 
-        print("\n" + "=" * 50)
+    rows.append({
+        "date": date,
+        "description": "Lieferando",
+        "amount": amount
+    })
 
-        start = max(0, i - 3)
-        end = min(len(lines), i + 4)
+df = pd.DataFrame(rows)
 
-        for j in range(start, end):
-            print(lines[j])
+df.to_csv("Outputs/january_lieferando.csv", index=False)
+
+print(df)
+print()
+print("Lieferando rows:", len(df))

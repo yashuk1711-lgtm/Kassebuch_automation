@@ -24,26 +24,28 @@ def extract_nexi_transactions(text):
 
     return matches
 
+def extract_lieferando_transactions(text):
 
-if __name__ == "__main__":
+    lines = text.splitlines()
+    transactions = []
 
-    pdf_file = "Data/Bank/January_Bank_Statement.pdf"
+    for i, line in enumerate(lines):
 
-    text = extract_text(pdf_file)
+        if "DERDENGELDEN TAKEAWAYCOM" not in line:
+            continue
 
-    nexi_transactions = extract_nexi_transactions(text)
+        # The payment line is immediately above TAKEAWAYCOM
+        if i == 0:
+            continue
 
-    print("\nNEXI TRANSACTIONS\n")
+        payment_line = lines[i - 1]
 
-    total = 0
+        match = re.search(
+            r"(\d{2}\.\d{2}\.)\s+\d{2}\.\d{2}\.\s+UEBERWEISUNGSGUTSCHR.*?([\d.,]+)\s+H",
+            payment_line,
+        )
 
-    for date, amount in nexi_transactions:
+        if match:
+            transactions.append((match.group(1), match.group(2)))
 
-        value = float(amount.replace(".", "").replace(",", "."))
-
-        total += value
-
-        print(date, value)
-
-    print("\nCOUNT:", len(nexi_transactions))
-    print("TOTAL:", round(total, 2))
+    return transactions
