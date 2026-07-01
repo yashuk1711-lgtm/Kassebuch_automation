@@ -163,7 +163,7 @@ def start_automation():
     # Reset progress
     app.after(0, lambda: progress.set(0))
 
-    # Reset status indicators
+    # Reset step indicators
     for name, label in status_labels.items():
         app.after(
             0,
@@ -193,10 +193,12 @@ def start_automation():
 
         except Exception as e:
 
+            error_message = str(e)
+
             app.after(
                 0,
                 lambda: status.configure(
-                    text=f"❌ {e}"
+                    text=f"❌ {error_message}"
                 )
             )
 
@@ -207,7 +209,10 @@ def start_automation():
                 lambda: start_btn.configure(state="normal")
             )
 
-    threading.Thread(target=worker, daemon=True).start()
+    threading.Thread(
+        target=worker,
+        daemon=True
+    ).start()
 
 
 # ==========================================

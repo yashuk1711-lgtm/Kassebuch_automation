@@ -1,7 +1,16 @@
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import pandas as pd
+import config
 from bank_parser import extract_text, extract_lieferando_transactions
 
-pdf_file = "Data/Bank/January_Bank_Statement.pdf"
+pdf_file = os.path.join(
+    config.BANK_FOLDER,
+    f"{config.MONTH}_Bank_Statement.pdf"
+)
 
 text = extract_text(pdf_file)
 
@@ -19,7 +28,14 @@ for date, amount in transactions:
 
 df = pd.DataFrame(rows)
 
-df.to_csv("Outputs/january_lieferando.csv", index=False)
+os.makedirs(config.OUTPUT_FOLDER, exist_ok=True)
+
+output_file = os.path.join(
+    config.OUTPUT_FOLDER,
+    f"{config.MONTH_LOWER}_lieferando.csv"
+)
+
+df.to_csv(output_file, index=False)
 
 print(df)
 print()

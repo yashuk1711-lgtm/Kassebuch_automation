@@ -1,34 +1,47 @@
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import pandas as pd
+import config
 
 print("=== GENERATE_FULL_KASSENBUCH STARTED ===")
 
+if config.STARTING_BALANCE is None:
+    raise SystemExit(
+        "No starting balance found in settings.json. "
+        "Run main.py to select a month first."
+    )
+
+
+def output_path(name):
+    return os.path.join(config.OUTPUT_FOLDER, f"{config.MONTH_LOWER}_{name}.csv")
+
+
+def read_csv_if_exists(path, **kwargs):
+    if os.path.exists(path):
+        return pd.read_csv(path, **kwargs)
+    return pd.DataFrame(columns=["date", "description", "amount"])
+
+
 # Load files
-pos_df = pd.read_csv("Outputs/january_pos.csv")
-nexi_df = pd.read_csv("Outputs/january_nexi.csv")
+pos_df = pd.read_csv(output_path("pos"))
+nexi_df = pd.read_csv(output_path("nexi"))
+lieferando_cash_df = pd.read_csv(output_path("lieferando_cash"), sep=";")
+lieferando_tips_df = pd.read_csv(output_path("lieferando_tips"), sep=";")
+uber_df = pd.read_csv(output_path("uber"), sep=";")
 
-lieferando_cash_df = pd.read_csv(
-    "Outputs/january_lieferando_cash.csv",
-    sep=";"
+manual_expenses_file = os.path.join(
+    config.MANUAL_FOLDER,
+    f"{config.MONTH_LOWER}_manual_expenses.csv"
 )
 
-lieferando_tips_df = pd.read_csv(
-    "Outputs/january_lieferando_tips.csv",
-    sep=";"
-)
-
-uber_df = pd.read_csv(
-    "Outputs/uber.csv",
-    sep=";"
-)
-
-manual_df = pd.read_csv(
-    "Outputs/manual_expenses.csv",
-    sep=";"
-)
+manual_df = read_csv_if_exists(manual_expenses_file, sep=";")
 
 rows = []
 lfd_nr = 1
-starting_balance = 42876.01
+starting_balance = config.STARTING_BALANCE
 
 for _, pos in pos_df.iterrows():
 
@@ -198,9 +211,16 @@ for _, row in df.iterrows():
 
 df["Neuestand"] = balances
 
-output_file = "Outputs/january_kassenbuch_full.csv"
+os.makedirs(config.OUTPUT_FOLDER, exist_ok=True)
+
+output_file = os.path.join(
+    config.OUTPUT_FOLDER,
+    f"{config.MONTH_LOWER}_kassenbuch_full.csv"
+)
 
 df.to_csv(output_file, index=False)
 
 print("Created:", output_file)
 print("Rows:", len(df))
+print("Anfangsbestand:", starting_balance)
+print("Endebestand:", balances[-1] if balances else starting_balance)

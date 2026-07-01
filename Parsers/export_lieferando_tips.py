@@ -1,11 +1,17 @@
-import fitz
-import pandas as pd
-import re
+import os
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import glob
+import re
 from collections import defaultdict
 
-# Find all Lieferando PDFs
-pdf_files = glob.glob("Data/Lieferando/*.pdf")
+import fitz
+import pandas as pd
+import config
+
+pdf_files = glob.glob(os.path.join(config.LIEFERANDO_FOLDER, "*.pdf"))
 
 daily_tips = defaultdict(float)
 
@@ -40,33 +46,27 @@ for pdf_path in pdf_files:
             lines[i]
         )
 
-        if date_match:
-            print("DATE FOUND:", lines[i])
-
         if not date_match:
+            continue
+
+        day, month, year = date_match.groups()
+
+        # Skip transactions outside the selected month
+        if config.MONTH_NUM and month != config.MONTH_NUM:
             continue
 
         amount_line = lines[i + 2].strip()
 
         try:
             amount = float(
-                amount_line.replace(".", "")
-                           .replace(",", ".")
+                amount_line.replace(".", "").replace(",", ".")
             )
-        except:
+        except ValueError:
             continue
-
-        day = date_match.group(1)
-        month = date_match.group(2)
 
         key = f"{day}.{month}."
 
-        print("TIP:", key, amount)
-
         daily_tips[key] += amount
-
-print("\nDAILY TIPS:")
-print(dict(daily_tips))
 
 rows = []
 
@@ -80,14 +80,15 @@ for date, amount in sorted(daily_tips.items()):
 
 df = pd.DataFrame(rows)
 
-df.to_csv(
-    "Outputs/january_lieferando_tips.csv",
-    sep=";",
-    index=False
+os.makedirs(config.OUTPUT_FOLDER, exist_ok=True)
+
+output_file = os.path.join(
+    config.OUTPUT_FOLDER,
+    f"{config.MONTH_LOWER}_lieferando_tips.csv"
 )
 
-print("\nRESULT:")
-print(df)
+df.to_csv(output_file, sep=";", index=False)
 
-print("\nRows:", len(df))
-print("\nCreated: Outputs/january_lieferando_tips.csv")
+print(df)
+print()
+print("Rows:", len(df))

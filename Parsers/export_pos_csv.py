@@ -2,11 +2,12 @@ import os
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import os
+
 import pandas as pd
 import config
 from pos_parser import extract_text, extract_sales
-
+print("MONTH =", config.MONTH)
+print("MONTH_LOWER =", config.MONTH_LOWER)
 
 def run():
 
@@ -14,12 +15,38 @@ def run():
 
     rows = []
 
+    # Month number mapping
+    month_numbers = {
+        "january": "01",
+        "february": "02",
+        "march": "03",
+        "april": "04",
+        "may": "05",
+        "june": "06",
+        "july": "07",
+        "august": "08",
+        "september": "09",
+        "october": "10",
+        "november": "11",
+        "december": "12"
+    }
+
+    selected_month = month_numbers[config.MONTH_LOWER]
+
     for file in os.listdir(folder):
 
+        if not file.endswith(".pdf"):
+            continue
+
+        # Ignore Uber and Lieferando reports
         if "Uber Eats" in file:
             continue
 
         if "Lieferando" in file:
+            continue
+
+        # Only process selected month
+        if f"-{selected_month}-" not in file:
             continue
 
         pdf_path = os.path.join(folder, file)

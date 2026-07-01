@@ -89,28 +89,36 @@ Manual Expenses ──────────► Manual Expense CSV
 
 * Python 3.10+
 * pandas
+* pdfplumber
+* PyMuPDF (`fitz`)
+* pytesseract (plus the Tesseract OCR binary installed on your machine)
 
 Install dependencies:
 
 ```bash
-pip install pandas
+pip install pandas pdfplumber PyMuPDF pytesseract
 ```
 
 ---
 
 ## Usage
 
-Run the monthly automation:
+Drop the month's source PDFs into the matching `Data/` subfolder
+(`Data/Bank`, `Data/Income_Reports`, `Data/Uber_Eats`, `Data/Lieferando`),
+then run the monthly automation:
 
 ```bash
-python run_month.py
+python main.py
 ```
 
-Or generate the final Kassenbuch directly:
+This prompts you to pick the month, automatically carries forward the
+previous month's closing balance as the new opening balance (or asks
+for one manually if there's no previous month yet), and runs the full
+parser → Kassenbuch pipeline.
 
-```bash
-python Parsers/generate_full_kassenbuch.py
-```
+`run_month.py` re-runs the same pipeline without prompting, reusing
+whichever month was last selected via `main.py` (its selection is
+stored in `settings.json`).
 
 ---
 
