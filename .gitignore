@@ -33,3 +33,11 @@ Data/
 
 # Keep the folder structure
 !Data/.gitkeep
+build/
+dist/
+Release/
+fitz_output.txt
+ocr_output.txt
+ocr_rows.csv
+ocr_words.csv
+transaction_blocks.csv
