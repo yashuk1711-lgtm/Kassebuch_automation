@@ -41,3 +41,8 @@ ocr_output.txt
 ocr_rows.csv
 ocr_words.csv
 transaction_blocks.csv
+
+# Bundled OCR binaries - copied locally before each build, never
+# committed (large third-party binaries, not source)
+Tesseract-OCR/
+poppler/
