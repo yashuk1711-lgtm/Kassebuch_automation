@@ -1,13 +1,10 @@
 import os
-import sys
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pandas as pd
+
 import config
-from pos_parser import extract_text, extract_sales
-print("MONTH =", config.MONTH)
-print("MONTH_LOWER =", config.MONTH_LOWER)
+from Parsers.pos_parser import extract_text, extract_sales
+
 
 def run():
 

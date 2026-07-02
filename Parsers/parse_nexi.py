@@ -1,22 +1,9 @@
-import sys
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parent.parent
-
-if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))
-
 import re
+
 import pandas as pd
+
+import paths
 import config
-
-# ---------------------------------------------
-# LOAD OCR ROWS
-# ---------------------------------------------
-
-df = pd.read_csv("ocr_rows.csv")
-
-transactions = []
 
 
 # ---------------------------------------------
@@ -76,62 +63,73 @@ def clean_amount(text):
 # PARSE TRANSACTIONS
 # ---------------------------------------------
 
-for i in range(len(df)):
+def run():
 
-    row = str(df.loc[i, "row"])
+    df = pd.read_csv(paths.OUTPUTS_DIR / "ocr_rows.csv")
 
-    # Only NEXI settlements
-    if "NEXI GERMANY GMBH" not in row:
-        continue
+    transactions = []
 
-    first_row = str(df.loc[i - 1, "row"]) if i > 0 else ""
+    for i in range(len(df)):
 
-    # Skip monthly fee transaction
-    if "BASISLASTSCHRIFT" in first_row:
-        continue
+        row = str(df.loc[i, "row"])
 
-    brutto_row = ""
+        # Only NEXI settlements
+        if "NEXI GERMANY GMBH" not in row:
+            continue
 
-    # Search next few rows for BRUTTO
-    for j in range(i + 1, min(i + 4, len(df))):
+        first_row = str(df.loc[i - 1, "row"]) if i > 0 else ""
 
-        candidate = str(df.loc[j, "row"])
+        # Skip monthly fee transaction
+        if "BASISLASTSCHRIFT" in first_row:
+            continue
 
-        if "BRUTTO" in candidate:
-            brutto_row = candidate
-            break
+        brutto_row = ""
 
-    date = clean_date(first_row)
-    amount = clean_amount(brutto_row)
+        # Search next few rows for BRUTTO
+        for j in range(i + 1, min(i + 4, len(df))):
 
-    # Skip incomplete OCR results
-    if date == "" or amount == "":
-        continue
+            candidate = str(df.loc[j, "row"])
 
-    transactions.append(
-        {
-            "date": date,
-            "description": "NEXI GERMANY GMBH",
-            "amount": amount
-        }
+            if "BRUTTO" in candidate:
+                brutto_row = candidate
+                break
+
+        date = clean_date(first_row)
+        amount = clean_amount(brutto_row)
+
+        # Skip incomplete OCR results
+        if date == "" or amount == "":
+            continue
+
+        transactions.append(
+            {
+                "date": date,
+                "description": "NEXI GERMANY GMBH",
+                "amount": amount
+            }
+        )
+
+    # -----------------------------------------
+    # EXPORT
+    # -----------------------------------------
+
+    result = pd.DataFrame(transactions)
+
+    print(result)
+
+    config.OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
+
+    output_file = config.OUTPUT_FOLDER / f"{config.MONTH_LOWER}_nexi.csv"
+
+    result.to_csv(
+        output_file,
+        index=False
     )
 
+    print()
+    print(f"Rows: {len(result)}")
+    print(f"Created: {output_file}")
 
-# ---------------------------------------------
-# EXPORT
-# ---------------------------------------------
 
-result = pd.DataFrame(transactions)
-
-print(result)
-
-output_file = f"Outputs/{config.MONTH_LOWER}_nexi.csv"
-
-result.to_csv(
-    output_file,
-    index=False
-)
-
-print()
-print(f"Rows: {len(result)}")
-print(f"Created: {output_file}")
+if __name__ == "__main__":
+    run()

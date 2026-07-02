@@ -1,8 +1,4 @@
 import os
-import sys
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 import glob
 import re
 from collections import defaultdict
@@ -11,86 +7,93 @@ import fitz
 import pandas as pd
 import config
 
-pdf_files = glob.glob(os.path.join(config.LIEFERANDO_FOLDER, "*.pdf"))
 
-daily_cash = defaultdict(float)
+def run():
 
-for pdf_path in pdf_files:
+    pdf_files = glob.glob(os.path.join(config.LIEFERANDO_FOLDER, "*.pdf"))
 
-    print("Reading:", pdf_path)
+    daily_cash = defaultdict(float)
 
-    doc = fitz.open(pdf_path)
+    for pdf_path in pdf_files:
 
-    text = ""
+        print("Reading:", pdf_path)
 
-    for page in doc:
-        text += page.get_text()
+        doc = fitz.open(pdf_path)
 
-    lines = text.splitlines()
+        text = ""
 
-    tips_start = len(lines)
+        for page in doc:
+            text += page.get_text()
 
-    for i, line in enumerate(lines):
-        if "Trinkgelder erhalten" in line:
-            tips_start = i
-            break
+        lines = text.splitlines()
 
-    order_lines = lines[:tips_start]
+        tips_start = len(lines)
 
-    for i in range(len(order_lines) - 2):
+        for i, line in enumerate(lines):
+            if "Trinkgelder erhalten" in line:
+                tips_start = i
+                break
 
-        date_match = re.match(
-            r"(\d{2})-(\d{2})-(\d{4}),",
-            order_lines[i]
-        )
+        order_lines = lines[:tips_start]
 
-        if not date_match:
-            continue
+        for i in range(len(order_lines) - 2):
 
-        day, month, year = date_match.groups()
-
-        # Skip transactions outside the selected month
-        if config.MONTH_NUM and month != config.MONTH_NUM:
-            continue
-
-        amount_line = order_lines[i + 2].strip()
-
-        # Skip online orders (already settled via bank transfer)
-        if "*" in amount_line:
-            continue
-
-        try:
-            amount = float(
-                amount_line.replace(".", "").replace(",", ".")
+            date_match = re.match(
+                r"(\d{2})-(\d{2})-(\d{4}),",
+                order_lines[i]
             )
-        except ValueError:
-            continue
 
-        key = f"{day}.{month}."
+            if not date_match:
+                continue
 
-        daily_cash[key] += amount
+            day, month, year = date_match.groups()
 
-rows = []
+            # Skip transactions outside the selected month
+            if config.MONTH_NUM and month != config.MONTH_NUM:
+                continue
 
-for date, amount in sorted(daily_cash.items()):
+            amount_line = order_lines[i + 2].strip()
 
-    rows.append({
-        "date": date,
-        "description": "Lieferando",
-        "amount": str(round(amount, 2)).replace(".", ",")
-    })
+            # Skip online orders (already settled via bank transfer)
+            if "*" in amount_line:
+                continue
 
-df = pd.DataFrame(rows)
+            try:
+                amount = float(
+                    amount_line.replace(".", "").replace(",", ".")
+                )
+            except ValueError:
+                continue
 
-os.makedirs(config.OUTPUT_FOLDER, exist_ok=True)
+            key = f"{day}.{month}."
 
-output_file = os.path.join(
-    config.OUTPUT_FOLDER,
-    f"{config.MONTH_LOWER}_lieferando_cash.csv"
-)
+            daily_cash[key] += amount
 
-df.to_csv(output_file, sep=";", index=False)
+    rows = []
 
-print(df)
-print()
-print("Rows:", len(df))
+    for date, amount in sorted(daily_cash.items()):
+
+        rows.append({
+            "date": date,
+            "description": "Lieferando",
+            "amount": str(round(amount, 2)).replace(".", ",")
+        })
+
+    df = pd.DataFrame(rows)
+
+    os.makedirs(config.OUTPUT_FOLDER, exist_ok=True)
+
+    output_file = os.path.join(
+        config.OUTPUT_FOLDER,
+        f"{config.MONTH_LOWER}_lieferando_cash.csv"
+    )
+
+    df.to_csv(output_file, sep=";", index=False)
+
+    print(df)
+    print()
+    print("Rows:", len(df))
+
+
+if __name__ == "__main__":
+    run()

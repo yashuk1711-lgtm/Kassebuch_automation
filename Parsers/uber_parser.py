@@ -1,12 +1,10 @@
-import os
 import pdfplumber
 import pytesseract
 import re
 
-_WINDOWS_TESSERACT = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+import paths
 
-if os.name == "nt" and os.path.exists(_WINDOWS_TESSERACT):
-    pytesseract.pytesseract.tesseract_cmd = _WINDOWS_TESSERACT
+pytesseract.pytesseract.tesseract_cmd = paths.TESSERACT_CMD
 
 
 def extract_uber_amount(pdf_file):

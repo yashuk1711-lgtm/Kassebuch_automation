@@ -1,8 +1,4 @@
 import os
-import sys
-
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 import glob
 import re
 from collections import defaultdict
@@ -11,84 +7,91 @@ import fitz
 import pandas as pd
 import config
 
-pdf_files = glob.glob(os.path.join(config.LIEFERANDO_FOLDER, "*.pdf"))
 
-daily_tips = defaultdict(float)
+def run():
 
-for pdf_path in pdf_files:
+    pdf_files = glob.glob(os.path.join(config.LIEFERANDO_FOLDER, "*.pdf"))
 
-    print("Reading:", pdf_path)
+    daily_tips = defaultdict(float)
 
-    doc = fitz.open(pdf_path)
+    for pdf_path in pdf_files:
 
-    text = ""
+        print("Reading:", pdf_path)
 
-    for page in doc:
-        text += page.get_text()
+        doc = fitz.open(pdf_path)
 
-    lines = text.splitlines()
+        text = ""
 
-    tips_section = False
+        for page in doc:
+            text += page.get_text()
 
-    for i in range(len(lines) - 2):
+        lines = text.splitlines()
 
-        # Start parsing after tips section begins
-        if "Trinkgelder erhalten" in lines[i]:
-            tips_section = True
-            continue
+        tips_section = False
 
-        if not tips_section:
-            continue
+        for i in range(len(lines) - 2):
 
-        # Match date lines
-        date_match = re.match(
-            r"(\d{2})-(\d{2})-(\d{4}),",
-            lines[i]
-        )
+            # Start parsing after tips section begins
+            if "Trinkgelder erhalten" in lines[i]:
+                tips_section = True
+                continue
 
-        if not date_match:
-            continue
+            if not tips_section:
+                continue
 
-        day, month, year = date_match.groups()
-
-        # Skip transactions outside the selected month
-        if config.MONTH_NUM and month != config.MONTH_NUM:
-            continue
-
-        amount_line = lines[i + 2].strip()
-
-        try:
-            amount = float(
-                amount_line.replace(".", "").replace(",", ".")
+            # Match date lines
+            date_match = re.match(
+                r"(\d{2})-(\d{2})-(\d{4}),",
+                lines[i]
             )
-        except ValueError:
-            continue
 
-        key = f"{day}.{month}."
+            if not date_match:
+                continue
 
-        daily_tips[key] += amount
+            day, month, year = date_match.groups()
 
-rows = []
+            # Skip transactions outside the selected month
+            if config.MONTH_NUM and month != config.MONTH_NUM:
+                continue
 
-for date, amount in sorted(daily_tips.items()):
+            amount_line = lines[i + 2].strip()
 
-    rows.append({
-        "date": date,
-        "description": "Lieferando Trinkgelder",
-        "amount": str(round(amount, 2)).replace(".", ",")
-    })
+            try:
+                amount = float(
+                    amount_line.replace(".", "").replace(",", ".")
+                )
+            except ValueError:
+                continue
 
-df = pd.DataFrame(rows)
+            key = f"{day}.{month}."
 
-os.makedirs(config.OUTPUT_FOLDER, exist_ok=True)
+            daily_tips[key] += amount
 
-output_file = os.path.join(
-    config.OUTPUT_FOLDER,
-    f"{config.MONTH_LOWER}_lieferando_tips.csv"
-)
+    rows = []
 
-df.to_csv(output_file, sep=";", index=False)
+    for date, amount in sorted(daily_tips.items()):
 
-print(df)
-print()
-print("Rows:", len(df))
+        rows.append({
+            "date": date,
+            "description": "Lieferando Trinkgelder",
+            "amount": str(round(amount, 2)).replace(".", ",")
+        })
+
+    df = pd.DataFrame(rows)
+
+    os.makedirs(config.OUTPUT_FOLDER, exist_ok=True)
+
+    output_file = os.path.join(
+        config.OUTPUT_FOLDER,
+        f"{config.MONTH_LOWER}_lieferando_tips.csv"
+    )
+
+    df.to_csv(output_file, sep=";", index=False)
+
+    print(df)
+    print()
+    print("Rows:", len(df))
+
+
+if __name__ == "__main__":
+    run()

@@ -1,12 +1,21 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+from PyInstaller.utils.hooks import collect_data_files
+
+datas = []
+datas += collect_data_files('customtkinter')
 
 a = Analysis(
     ['gui.py'],
     pathex=[],
     binaries=[],
-    datas=[],
-    hiddenimports=[],
+    datas=datas,
+    hiddenimports=[
+        'fitz',
+        'pdfplumber',
+        'pytesseract',
+        'pdf2image',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

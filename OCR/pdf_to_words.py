@@ -3,27 +3,24 @@ import pandas as pd
 
 from pdf2image import convert_from_path
 
-# -----------------------------------------
-# CONFIGURATION
-# -----------------------------------------
+import paths
 
-pytesseract.pytesseract.tesseract_cmd = (
-    r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-)
-
-POPPLER_PATH = r"C:\poppler\poppler-26.02.0\Library\bin"
+pytesseract.pytesseract.tesseract_cmd = paths.TESSERACT_CMD
 
 
 # -----------------------------------------
 # OCR FUNCTION
 # -----------------------------------------
 
-def pdf_to_words(pdf_path):
+def pdf_to_words(pdf_path, output_file=None):
+
+    if output_file is None:
+        output_file = paths.OUTPUTS_DIR / "ocr_words.csv"
 
     images = convert_from_path(
         pdf_path,
         dpi=300,
-        poppler_path=POPPLER_PATH
+        poppler_path=paths.POPPLER_PATH
     )
 
     rows = []
@@ -57,11 +54,10 @@ def pdf_to_words(pdf_path):
 
     df = pd.DataFrame(rows)
 
-    df.to_csv(
-        "ocr_words.csv",
-        index=False
-    )
+    paths.OUTPUTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    df.to_csv(output_file, index=False)
 
     print()
     print("Words:", len(df))
-    print("Created: ocr_words.csv")
+    print("Created:", output_file)

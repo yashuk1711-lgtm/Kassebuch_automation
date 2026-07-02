@@ -1,5 +1,7 @@
 import pandas as pd
 
+import paths
+
 
 # ----------------------------------------
 # NORMALIZE OCR WORDS
@@ -27,13 +29,17 @@ def normalize_word(word):
 # BUILD OCR ROWS
 # ----------------------------------------
 
-def build_rows():
+def build_rows(input_file=None, output_file=None):
 
-    INPUT_FILE = "ocr_words.csv"
-    OUTPUT_FILE = "ocr_rows.csv"
+    if input_file is None:
+        input_file = paths.OUTPUTS_DIR / "ocr_words.csv"
+
+    if output_file is None:
+        output_file = paths.OUTPUTS_DIR / "ocr_rows.csv"
+
     Y_THRESHOLD = 8
 
-    df = pd.read_csv(INPUT_FILE)
+    df = pd.read_csv(input_file)
 
     # Remove empty words
     df = df[df["text"].notna()]
@@ -151,14 +157,14 @@ def build_rows():
     rows_df = pd.DataFrame(rows)
 
     rows_df.to_csv(
-        OUTPUT_FILE,
+        output_file,
         index=False
     )
 
     print(rows_df.head(20))
     print()
     print(f"Rows: {len(rows_df)}")
-    print(f"Saved as {OUTPUT_FILE}")
+    print(f"Saved as {output_file}")
 
 
 # ----------------------------------------

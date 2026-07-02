@@ -92,11 +92,12 @@ Manual Expenses ──────────► Manual Expense CSV
 * pdfplumber
 * PyMuPDF (`fitz`)
 * pytesseract (plus the Tesseract OCR binary installed on your machine)
+* openpyxl
 
 Install dependencies:
 
 ```bash
-pip install pandas pdfplumber PyMuPDF pytesseract
+pip install pandas pdfplumber PyMuPDF pytesseract openpyxl
 ```
 
 ---

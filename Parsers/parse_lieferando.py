@@ -1,22 +1,9 @@
-import sys
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parent.parent
-
-if str(ROOT) not in sys.path:
-    sys.path.append(str(ROOT))
-
 import re
+
 import pandas as pd
+
+import paths
 import config
-
-# ---------------------------------------------
-# LOAD OCR ROWS
-# ---------------------------------------------
-
-df = pd.read_csv("ocr_rows.csv")
-
-transactions = []
 
 
 # ---------------------------------------------
@@ -64,45 +51,56 @@ def clean_amount(text):
 # PARSE
 # ---------------------------------------------
 
-for i in range(len(df)):
+def run():
 
-    row = str(df.loc[i, "row"])
+    df = pd.read_csv(paths.OUTPUTS_DIR / "ocr_rows.csv")
 
-    if "DERDENGELDEN TAKEAWAYCOM" not in row:
-        continue
+    transactions = []
 
-    previous_row = str(df.loc[i - 1, "row"]) if i > 0 else ""
+    for i in range(len(df)):
 
-    date = clean_date(previous_row)
-    amount = clean_amount(previous_row)
+        row = str(df.loc[i, "row"])
 
-    if date == "" or amount == "":
-        continue
+        if "DERDENGELDEN TAKEAWAYCOM" not in row:
+            continue
 
-    transactions.append(
-        {
-            "date": date,
-            "description": "Lieferando",
-            "amount": amount
-        }
+        previous_row = str(df.loc[i - 1, "row"]) if i > 0 else ""
+
+        date = clean_date(previous_row)
+        amount = clean_amount(previous_row)
+
+        if date == "" or amount == "":
+            continue
+
+        transactions.append(
+            {
+                "date": date,
+                "description": "Lieferando",
+                "amount": amount
+            }
+        )
+
+    # -----------------------------------------
+    # EXPORT
+    # -----------------------------------------
+
+    result = pd.DataFrame(transactions)
+
+    print(result)
+
+    config.OUTPUT_FOLDER.mkdir(parents=True, exist_ok=True)
+
+    output_file = config.OUTPUT_FOLDER / f"{config.MONTH_LOWER}_lieferando.csv"
+
+    result.to_csv(
+        output_file,
+        index=False
     )
 
+    print()
+    print(f"Rows: {len(result)}")
+    print(f"Created: {output_file}")
 
-# ---------------------------------------------
-# EXPORT
-# ---------------------------------------------
 
-result = pd.DataFrame(transactions)
-
-print(result)
-
-output_file = f"Outputs/{config.MONTH_LOWER}_lieferando.csv"
-
-result.to_csv(
-    output_file,
-    index=False
-)
-
-print()
-print(f"Rows: {len(result)}")
-print(f"Created: {output_file}")
+if __name__ == "__main__":
+    run()
